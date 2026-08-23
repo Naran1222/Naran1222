@@ -47,8 +47,8 @@ def get_yesterday_data():
     WITH recent_deposits AS (
         SELECT player_id, DATE(created_at) AS deposit_date
         FROM invoices
-        WHERE type = 'deposit' 
-          AND status = 'success'
+        WHERE type = 1 
+          AND status = 2
           AND created_at >= CURRENT_DATE - INTERVAL '15 days'
     ),
     ftd_dates AS (
@@ -103,7 +103,7 @@ def get_yesterday_data():
         elif isinstance(item, Decimal):
             processed_row.append(float(item)) # Відсотки стануть float
         elif isinstance(item, (datetime, date)):
-            processed_row.append(str(item))   # Дати стануть текстом
+            processed_row.append(item.strftime('%d.%m.%Y'))
         else:
             processed_row.append(item)        # Цілі числа (cohort_size, d1-d7) залишаться цілими
             
