@@ -31,4 +31,4 @@ jobs:
           PORT: ${{ secrets.PORT }}
           SERVER_NAME: ${{ secrets.SERVER_NAME }}
 	  USER_NAME: ${{ secrets.USER_NAME }}
-        run: python main.py 
+        run: python daily.py 
