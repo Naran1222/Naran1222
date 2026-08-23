@@ -26,9 +26,9 @@ jobs:
 
       - name: running script
 	env:
-	  ETL_SHEETS_BOT_CD: ${{ secrets.ETL_SHEETS_BOT_CD }}
+          ETL_SHEETS_BOT_CD: ${{ secrets.ETL_SHEETS_BOT_CD }}
           PASSWORD: ${{ secrets.PASSWORD }}
           PORT: ${{ secrets.PORT }}
           SERVER_NAME: ${{ secrets.SERVER_NAME }}
-	  USER_NAME: ${{ secrets.USER_NAME }}
+          USER_NAME: ${{ secrets.USER_NAME }}
         run: python daily.py 
