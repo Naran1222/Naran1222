@@ -109,25 +109,28 @@ def get_yesterday_data():
             
     return processed_row
 
-def update_google_sheets(new_row):
-    """Апендить або перезаписує дані в Google Sheets"""
-    # ВИКОРИСТОВУЄМО НАШУ ФУНКЦІЮ
+def update_google_sheets(raw_data_row):
+    """Апендить або перезаписує дані в Google Sheets із додаванням індексу"""
     gc = get_sheets_client()
     sh = gc.open(SPREADSHEET_NAME)
-    ws = sh.worksheet(WORKSHEET_NAME)
-    
-    target_date = new_row[0] 
-    
-    dates_in_sheet = ws.col_values(1)
+    ws = sh.worksheet(WORKSHEET_NAME) 
+    target_date = raw_data_row[0]
+    dates_in_sheet = ws.col_values(2)
     
     if target_date in dates_in_sheet:
         row_index = dates_in_sheet.index(target_date) + 1 
-        cell_range = f"A{row_index}:P{row_index}" 
-        ws.update(cell_range, [new_row])
-        print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index}.")
+        existing_index = ws.cell(row_index, 1).value
+        full_row = [existing_index] + raw_data_row
+        cell_range = f"A{row_index}:Q{row_index}" 
+        ws.update(cell_range, [full_row])
+        print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index} (індекс {existing_index}).")
+        
     else:
-        ws.append_row(new_row)
-        print(f"[{datetime.now()}] Дані за {target_date} додано новим рядком.")
+        all_col_a = ws.col_values(1)
+        next_index = len(all_col_a) if len(all_col_a) > 0 else 1
+        full_row = [next_index] + raw_data_row
+        ws.append_row(full_row)
+        print(f"[{datetime.now()}] Дані за {target_date} додано новим рядком з індексом {next_index}.")
 
 if __name__ == "__main__":
     print("Запуск розрахунку когорт...")
