@@ -34,22 +34,24 @@ def get_last_8_days_data():
 
     query = """
     WITH true_ftd AS (
-        SELECT player_id, MIN(DATE(created_at)) AS ftd_date
-        FROM invoices
-        WHERE type = 1 AND status = 2
-        GROUP BY player_id
-    ),
-    target_cohorts AS (
-        SELECT player_id, ftd_date
-        FROM true_ftd
-        WHERE ftd_date >= CURRENT_DATE - INTERVAL '15 days'
-    ),
-    recent_deposits AS (
-        SELECT d.player_id, DATE(d.created_at) AS deposit_date
-        FROM invoices d
-        JOIN target_cohorts c ON d.player_id = c.player_id
-        WHERE d.type = 1 AND d.status = 2
-    ),
+    SELECT player_id, MIN(DATE(created_at)) AS ftd_date
+    FROM invoices
+    WHERE type = 1 AND status = 2
+    GROUP BY player_id
+),
+target_cohorts AS (
+    -- 1. БАЗОВЕ ВІКНО: Беремо 30 днів історії. 
+    -- Це дає віконній функції величезний "розгін", щоб рахувати без нулів.
+    SELECT player_id, ftd_date
+    FROM true_ftd
+    WHERE ftd_date >= CURRENT_DATE - INTERVAL '30 days'
+),
+recent_deposits AS (
+    SELECT d.player_id, DATE(d.created_at) AS deposit_date
+    FROM invoices d
+    JOIN target_cohorts c ON d.player_id = c.player_id
+    WHERE d.type = 1 AND d.status = 2
+),
 cohort_activity AS (
     SELECT 
         f.ftd_date AS day,
@@ -64,22 +66,25 @@ cohort_activity AS (
     FROM target_cohorts f
     LEFT JOIN recent_deposits d ON f.player_id = d.player_id
     GROUP BY f.ftd_date
+),
+rolling_calc AS (
+    SELECT 
+        day,
+        cohort_size, d1, d2, d3, d4, d5, d6, d7,
+        ROUND(SUM(d1) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d1%",
+        ROUND(SUM(d2) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d2%",
+        ROUND(SUM(d3) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d3%",
+        ROUND(SUM(d4) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d4%",
+        ROUND(SUM(d5) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d5%",
+        ROUND(SUM(d6) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d6%",
+        ROUND(SUM(d7) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d7%"
+    FROM cohort_activity
+    WINDOW w AS (ORDER BY day RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW)
 )
-SELECT 
-    day,
-    cohort_size,
-    d1, d2, d3, d4, d5, d6, d7,
-    ROUND(SUM(d1) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d1%",
-    ROUND(SUM(d2) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d2%",
-    ROUND(SUM(d3) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d3%",
-    ROUND(SUM(d4) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d4%",
-    ROUND(SUM(d5) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d5%",
-    ROUND(SUM(d6) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d6%",
-    ROUND(SUM(d7) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d7%"
-
-FROM cohort_activity
-WINDOW w AS (ORDER BY day RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW)
-ORDER BY day DESC;
+SELECT * FROM rolling_calc 
+-- 2. ВІКНО ВИВОДУ: Передаємо в Google Sheets лише останні 8 днів (бо старіші вже зафіксовані).
+WHERE day >= CURRENT_DATE - INTERVAL '8 days'
+ORDER BY day ASC;
     """
     
     cursor.execute(query)
