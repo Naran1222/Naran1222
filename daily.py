@@ -17,29 +17,18 @@ SPREADSHEET_NAME = "Daily Eval"
 WORKSHEET_NAME = "Raw"
 
 def get_db_connection():
-    """Ініціалізація з'єднання з PostgreSQL"""
     if not all([DB_HOST, DB_PORT, DB_USER, DB_PASS]):
         raise ValueError("Критична помилка: бракує змінних середовища для підключення до БД!")
-        
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASS,
-        dbname=DB_NAME
-    )
+    return psycopg2.connect(host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASS, dbname=DB_NAME)
 
 def get_sheets_client():
-    """Ініціалізація клієнта Google Sheets через JSON-секрет"""
     if not GOOGLE_CREDS_JSON:
         raise ValueError("Критична помилка: секрет ETL_SHEETS_BOT_CD не знайдено!")
-        
     creds_dict = json.loads(GOOGLE_CREDS_JSON)
     return gspread.service_account_from_dict(creds_dict)
 
-def get_yesterday_data():
-    """Виконує SQL-запит і повертає 1 рядок даних за вчора"""
-    # ВИКОРИСТОВУЄМО НАШУ ФУНКЦІЮ
+def get_last_8_days_data():
+    """Виконує SQL-запит і повертає масив даних за останні 8 днів"""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -85,58 +74,64 @@ def get_yesterday_data():
         WINDOW w AS (ORDER BY day RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW)
     )
     SELECT * FROM rolling_calc 
-    WHERE day = CURRENT_DATE - INTERVAL '1 day';
+    WHERE day >= CURRENT_DATE - INTERVAL '8 days'
+    ORDER BY day ASC;
     """
     
     cursor.execute(query)
-    row = cursor.fetchone()
+    rows = cursor.fetchall() # Забираємо всі 8 рядків
     conn.close()
     
-    if not row:
+    if not rows:
         return None
         
-    # Правильне форматування типів даних для Google Sheets
-    processed_row = []
-    for item in row:
-        if item is None:
-            processed_row.append(0)
-        elif isinstance(item, Decimal):
-            processed_row.append(float(item)) # Відсотки стануть float
-        elif isinstance(item, (datetime, date)):
-            processed_row.append(item.strftime('%d.%m.%Y'))
-        else:
-            processed_row.append(item)        # Цілі числа (cohort_size, d1-d7) залишаться цілими
+    all_processed_rows = []
+    for row in rows:
+        processed_row = []
+        for item in row:
+            if item is None:
+                processed_row.append(0)
+            elif isinstance(item, Decimal):
+                processed_row.append(float(item))
+            elif isinstance(item, (datetime, date)):
+                processed_row.append(item.strftime('%d.%m.%Y'))
+            else:
+                processed_row.append(item)
+        all_processed_rows.append(processed_row)
             
-    return processed_row
+    return all_processed_rows
 
-def update_google_sheets(raw_data_row):
-    """Апендить або перезаписує дані в Google Sheets із додаванням індексу"""
+def update_google_sheets(raw_data_rows):
+    """Проходиться по масиву днів, оновлюючи або додаючи кожен рядок"""
     gc = get_sheets_client()
     sh = gc.open(SPREADSHEET_NAME)
     ws = sh.worksheet(WORKSHEET_NAME) 
-    target_date = raw_data_row[0]
-    dates_in_sheet = ws.col_values(2)
     
-    if target_date in dates_in_sheet:
-        row_index = dates_in_sheet.index(target_date) + 1 
-        existing_index = ws.cell(row_index, 1).value
-        full_row = [existing_index] + raw_data_row
-        cell_range = f"A{row_index}:Q{row_index}" 
-        ws.update(cell_range, [full_row])
-        print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index} (індекс {existing_index}).")
+    for raw_data_row in raw_data_rows:
+        target_date = raw_data_row[0]
+        # Витягуємо дати на кожній ітерації, щоб індекси не збилися при додаванні нових рядків
+        dates_in_sheet = ws.col_values(2) 
         
-    else:
-        all_col_a = ws.col_values(1)
-        next_index = len(all_col_a) if len(all_col_a) > 0 else 1
-        full_row = [next_index] + raw_data_row
-        ws.append_row(full_row)
-        print(f"[{datetime.now()}] Дані за {target_date} додано новим рядком з індексом {next_index}.")
+        if target_date in dates_in_sheet:
+            row_index = dates_in_sheet.index(target_date) + 1 
+            existing_index = ws.cell(row_index, 1).value
+            full_row = [existing_index] + raw_data_row
+            cell_range = f"A{row_index}:Q{row_index}" 
+            ws.update(cell_range, [full_row])
+            print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index}.")
+            
+        else:
+            all_col_a = ws.col_values(1)
+            next_index = len(all_col_a) if len(all_col_a) > 0 else 1
+            full_row = [next_index] + raw_data_row
+            ws.append_row(full_row)
+            print(f"[{datetime.now()}] Дані за {target_date} додано новим рядком (індекс {next_index}).")
 
 if __name__ == "__main__":
     print("Запуск розрахунку когорт...")
-    data = get_yesterday_data()
+    data_rows = get_last_8_days_data()
     
-    if data:
-        update_google_sheets(data)
+    if data_rows:
+        update_google_sheets(data_rows)
     else:
-        print("Немає даних за вчорашній день.")
+        print("Немає даних для оновлення.")
