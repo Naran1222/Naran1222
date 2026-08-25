@@ -33,49 +33,53 @@ def get_last_8_days_data():
     cursor = conn.cursor()
 
     query = """
-    WITH recent_deposits AS (
-        SELECT player_id, DATE(created_at) AS deposit_date
+    WITH true_ftd AS (
+        SELECT player_id, MIN(DATE(created_at)) AS ftd_date
         FROM invoices
-        WHERE type = 1 
-          AND status = 2
-          AND created_at >= CURRENT_DATE - INTERVAL '15 days'
-    ),
-    ftd_dates AS (
-        SELECT player_id, MIN(deposit_date) AS ftd_date
-        FROM recent_deposits
+        WHERE type = 1 AND status = 2
         GROUP BY player_id
     ),
-    cohort_activity AS (
-        SELECT 
-            f.ftd_date AS day,
-            COUNT(DISTINCT f.player_id) AS cohort_size,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 1 THEN d.player_id END) AS d1,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 2 THEN d.player_id END) AS d2,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 3 THEN d.player_id END) AS d3,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 4 THEN d.player_id END) AS d4,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 5 THEN d.player_id END) AS d5,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 6 THEN d.player_id END) AS d6,
-            COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 7 THEN d.player_id END) AS d7
-        FROM ftd_dates f
-        LEFT JOIN recent_deposits d ON f.player_id = d.player_id
-        GROUP BY f.ftd_date
+    target_cohorts AS (
+        SELECT player_id, ftd_date
+        FROM true_ftd
+        WHERE ftd_date >= CURRENT_DATE - INTERVAL '15 days'
     ),
-    rolling_calc AS (
-        SELECT 
-            day, cohort_size, d1, d2, d3, d4, d5, d6, d7,
-            ROUND(SUM(d1) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d1%",
-            ROUND(SUM(d2) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d2%",
-            ROUND(SUM(d3) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d3%",
-            ROUND(SUM(d4) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d4%",
-            ROUND(SUM(d5) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d5%",
-            ROUND(SUM(d6) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d6%",
-            ROUND(SUM(d7) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 4) AS "d7%"
-        FROM cohort_activity
-        WINDOW w AS (ORDER BY day RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW)
-    )
-    SELECT * FROM rolling_calc 
-    WHERE day >= CURRENT_DATE - INTERVAL '8 days'
-    ORDER BY day ASC;
+    recent_deposits AS (
+        SELECT d.player_id, DATE(d.created_at) AS deposit_date
+        FROM invoices d
+        JOIN target_cohorts c ON d.player_id = c.player_id
+        WHERE d.type = 1 AND d.status = 2
+    ),
+cohort_activity AS (
+    SELECT 
+        f.ftd_date AS day,
+        COUNT(DISTINCT f.player_id) AS cohort_size,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 1 THEN d.player_id END) AS d1,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 2 THEN d.player_id END) AS d2,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 3 THEN d.player_id END) AS d3,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 4 THEN d.player_id END) AS d4,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 5 THEN d.player_id END) AS d5,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 6 THEN d.player_id END) AS d6,
+        COUNT(DISTINCT CASE WHEN d.deposit_date - f.ftd_date = 7 THEN d.player_id END) AS d7
+    FROM target_cohorts f
+    LEFT JOIN recent_deposits d ON f.player_id = d.player_id
+    GROUP BY f.ftd_date
+)
+SELECT 
+    day,
+    cohort_size,
+    d1, d2, d3, d4, d5, d6, d7,
+    ROUND(SUM(d1) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d1%",
+    ROUND(SUM(d2) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d2%",
+    ROUND(SUM(d3) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d3%",
+    ROUND(SUM(d4) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d4%",
+    ROUND(SUM(d5) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d5%",
+    ROUND(SUM(d6) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d6%",
+    ROUND(SUM(d7) OVER w * 1.0 / NULLIF(SUM(cohort_size) OVER w, 0), 2) AS "d7%"
+
+FROM cohort_activity
+WINDOW w AS (ORDER BY day RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW)
+ORDER BY day DESC;
     """
     
     cursor.execute(query)
