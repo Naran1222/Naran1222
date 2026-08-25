@@ -118,7 +118,9 @@ def update_google_sheets(raw_data_rows):
         
         if target_date in dates_in_sheet:
             row_index = dates_in_sheet.index(target_date) + 1 
-            existing_index = ws.cell(row_index, 1).value
+            raw_index = ws.cell(row_index, 1).value
+            existing_index = int(raw_index) if raw_index and str(raw_index).isdigit() else raw_index
+            
             full_row = [existing_index] + raw_data_row
             cell_range = f"A{row_index}:Q{row_index}" 
             ws.update(cell_range, [full_row])
