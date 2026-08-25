@@ -83,7 +83,7 @@ ORDER BY day DESC;
     """
     
     cursor.execute(query)
-    rows = cursor.fetchall()
+    rows = cursor.fetchall() # Забираємо всі 8 рядків
     conn.close()
     
     if not rows:
@@ -113,18 +113,24 @@ def update_google_sheets(raw_data_rows):
     
     for raw_data_row in raw_data_rows:
         target_date = raw_data_row[0]
+        # Витягуємо дати на кожній ітерації, щоб індекси не збилися при додаванні нових рядків
         dates_in_sheet = ws.col_values(2) 
+        
         if target_date in dates_in_sheet:
             row_index = dates_in_sheet.index(target_date) + 1 
-            cell_range = f"B{row_index}:Q{row_index}" 
-            ws.update(cell_range, [raw_data_row], value_input_option="USER_ENTERED")
-            print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index} (індекс не зачеплено).")
+            raw_index = ws.cell(row_index, 1).value
+            existing_index = int(raw_index) if raw_index and str(raw_index).isdigit() else raw_index
+            
+            full_row = [existing_index] + raw_data_row
+            cell_range = f"A{row_index}:Q{row_index}" 
+            ws.update(cell_range, [full_row])
+            print(f"[{datetime.now()}] Дані за {target_date} оновлено в рядку {row_index}.")
             
         else:
             all_col_a = ws.col_values(1)
             next_index = len(all_col_a) if len(all_col_a) > 0 else 1
             full_row = [next_index] + raw_data_row
-            ws.append_row(full_row, value_input_option="USER_ENTERED")
+            ws.append_row(full_row)
             print(f"[{datetime.now()}] Дані за {target_date} додано новим рядком (індекс {next_index}).")
 
 if __name__ == "__main__":
