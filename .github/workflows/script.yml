@@ -34,3 +34,4 @@ jobs:
         run: |
           python daily-CRM_pipeline.py
           python daily-VIP_pipeline.py
+          python daily-SUPERVIP_pipeline.py
