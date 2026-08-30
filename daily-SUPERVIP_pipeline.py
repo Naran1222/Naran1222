@@ -26,7 +26,7 @@ DB2_NAME = "infinity_game_service"
 
 # Google Sheets
 GOOGLE_CREDS_JSON = os.environ.get('ETL_SHEETS_BOT_CD')
-SPREADSHEET_ID = "1qODTcrrOY_ih7uQwgDrEyTYr1KaLhu4rMy-u_h9Rx4I"
+SPREADSHEET_ID = "1BA15gefAfsYmq-KoDbLF0kwOrIOHITM61b6u46wlQNw"
 JOIN_KEY = "player_id"
 
 SQL_QUERY_1 = """
