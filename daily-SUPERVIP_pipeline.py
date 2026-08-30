@@ -33,11 +33,7 @@ SQL_QUERY_1 = """
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-        '1923bd7f-b03c-447c-8824-8bcc794fe437', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
-        'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
-        'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7', 
-        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
     ]::uuid[]) AS player_id
 ),
 
@@ -141,11 +137,7 @@ SQL_QUERY_2 = """
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-        '1923bd7f-b03c-447c-8824-8bcc794fe437', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
-        'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
-        'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7', 
-        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
     ]::uuid[]) AS player_id
 ),
 sessions_data AS (
