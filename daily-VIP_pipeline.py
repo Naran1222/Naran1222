@@ -255,24 +255,28 @@ def main():
 
     print(f"[{datetime.now()}] Робимо JOIN...")
     df_joined = pd.merge(df1, df2, on=JOIN_KEY, how="outer")
-    
-    # Очищуємо порожні значення і перетворюємо все в рядки для Google Sheets
-    df_joined = df_joined.astype(str).replace({"nan": "", "NaT": "", "None": ""})
+    # Видаляємо стару лінію з astype(str).replace(...)
     df_joined.set_index(JOIN_KEY, inplace=True)
     
     print(f"[{datetime.now()}] Підключаємось до Google Sheets...")
     gc = get_sheets_client()
     sh = gc.open_by_key(SPREADSHEET_ID)
 
-    # На скріншоті дати у форматі "24.08", тому можна задати відповідний формат
     run_date = datetime.now().strftime("%d.%m.%Y")
 
-    # Проходимось по кожному гравцю в об'єднаній таблиці
+    # Допоміжна функція: примусово робить рядок і вичищає всі види NaN/Inf
+    def get_safe_str(val):
+        if pd.isna(val):
+            return ""
+        v = str(val).strip()
+        if v.lower() in ("nan", "nat", "none", "<na>", "inf", "-inf"):
+            return ""
+        return v
+
     for player_id in df_joined.index:
         clean_player_id = str(player_id) 
         sheet_name = PLAYER_NAMES.get(clean_player_id, clean_player_id)
         
-        # Витягуємо всі метрики поточного гравця у зручний словник
         row_data = df_joined.loc[player_id].to_dict()
         
         try:
@@ -284,7 +288,6 @@ def main():
         first_row = worksheet.row_values(1)
         next_col_idx = len(first_row) + 1
 
-        # Якщо аркуш щойно створений, записуємо шаблон назв (стовпець А)
         if next_col_idx == 1:
             metrics_col = [
                 ["Дата"], ["Email"], ["Последний вход в систему"], ["Последняя активность на сайте"],
@@ -296,28 +299,28 @@ def main():
             worksheet.update(values=metrics_col, range_name=rowcol_to_a1(1, 1))
             next_col_idx = 2
 
-        # Формуємо колонку з даними строго за шаблоном скріншота
+        # Застосовуємо get_safe_str() до кожної метрики, що гарантує валідний JSON
         player_col_formatted = [
             [run_date],                                    
-            [""],                                          # Email (немає в поточному SQL)
-            [row_data.get("first_session_start", "")],     
-            [row_data.get("last_session_end", "")],        
-            [row_data.get("all_games_list", "")],          # Ігри + Ставки
+            [""],                                          
+            [get_safe_str(row_data.get("first_session_start"))],     
+            [get_safe_str(row_data.get("last_session_end"))],        
+            [get_safe_str(row_data.get("all_games_list"))],          
             [clean_player_id],                             
-            [row_data.get("deps_count", "")],              
-            [row_data.get("deps_sum", "")],                
-            [row_data.get("deps_avg", "")],                
-            [row_data.get("first_dep", "")],               
-            [row_data.get("avg_repeat_dep", "")],          
-            [row_data.get("wd_count", "")],                
-            [row_data.get("wd_sum", "")],                  
-            [row_data.get("total_bets", "")],              
-            [row_data.get("total_wins", "")],              
-            [row_data.get("ggr", "")],                     
-            [row_data.get("ngr", "")],                     
-            [row_data.get("rtp", "")],                     # RTP передається як число, % можна налаштувати у Sheets
-            [row_data.get("max_bet", "")],                 
-            [row_data.get("top_game_name", "")]            
+            [get_safe_str(row_data.get("deps_count"))],              
+            [get_safe_str(row_data.get("deps_sum"))],                
+            [get_safe_str(row_data.get("deps_avg"))],                
+            [get_safe_str(row_data.get("first_dep"))],               
+            [get_safe_str(row_data.get("avg_repeat_dep"))],          
+            [get_safe_str(row_data.get("wd_count"))],                
+            [get_safe_str(row_data.get("wd_sum"))],                  
+            [get_safe_str(row_data.get("total_bets"))],              
+            [get_safe_str(row_data.get("total_wins"))],              
+            [get_safe_str(row_data.get("ggr"))],                     
+            [get_safe_str(row_data.get("ngr"))],                     
+            [get_safe_str(row_data.get("rtp"))],                     
+            [get_safe_str(row_data.get("max_bet"))],                 
+            [get_safe_str(row_data.get("top_game_name"))]            
         ]
 
         start_cell = rowcol_to_a1(1, next_col_idx)
