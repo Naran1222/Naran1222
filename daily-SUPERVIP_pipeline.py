@@ -4,7 +4,7 @@ import pandas as pd
 import psycopg2
 import gspread
 from gspread.utils import rowcol_to_a1
-from datetime import datetime
+from datetime import datetime, timedelta
 import warnings
 
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -249,7 +249,7 @@ def main():
     gc = get_sheets_client()
     sh = gc.open_by_key(SPREADSHEET_ID)
 
-    run_date = datetime.now().strftime("%d.%m.%Y")
+    run_date = (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y")
 
     # Допоміжна функція: примусово робить рядок і вичищає всі види NaN/Inf
     def get_safe_str(val):
