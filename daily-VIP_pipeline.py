@@ -262,7 +262,7 @@ def main():
     gc = get_sheets_client()
     sh = gc.open_by_key(SPREADSHEET_ID)
 
-        run_date = (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y")
+    run_date = (datetime.now() - timedelta(days=1)).strftime("%d.%m.%Y")
 
     # Допоміжна функція: примусово робить рядок і вичищає всі види NaN/Inf
     def get_safe_str(val):
