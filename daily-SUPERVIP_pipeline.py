@@ -24,6 +24,13 @@ DB2_USER = os.environ.get('USER_NAME')
 DB2_PASS = os.environ.get('PASSWORD')
 DB2_NAME = "infinity_game_service"
 
+#База 3
+DB3_HOST = os.environ.get('SERVER_NAME')
+DB3_PORT = os.environ.get('PORT')
+DB3_USER = os.environ.get('USER_NAME')
+DB3_PASS = os.environ.get('PASSWORD')
+DB3_NAME = "infinity_bonus_service"
+
 # Google Sheets
 GOOGLE_CREDS_JSON = os.environ.get('ETL_SHEETS_BOT_CD')
 SPREADSHEET_ID = "1BA15gefAfsYmq-KoDbLF0kwOrIOHITM61b6u46wlQNw"
@@ -209,6 +216,39 @@ LEFT JOIN
 LEFT JOIN 
     sessions_data sd ON v.player_id = sd.player_id;
 """
+SQL_QUERY_3="""
+
+WITH 
+vip_segment AS (
+    SELECT UNNEST(ARRAY[
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+    ]::uuid[]) AS player_id
+),
+bonuses as (
+	select 
+		player_id,
+		name,
+		result,
+		base_currency_payout /100.0 as payout
+	from 
+		public.player_bonuses
+	where 
+		created_at<=current_date
+		and created_at>=current_date - interval'1 days'
+)
+select
+	v.player_id,
+	bool_or(b.result = 1) AS is_claimed,
+	STRING_AGG(b.name||': '||case when b.result = 1 then 'In proggress' when b.result = 2 then 'Finished' when b.result = 3 then 'Cancelled' when b.result = 4 then 'Lost' end||'('||b.payout||')', ', ') as bonus,
+	SUM(b.payout) as payout
+	from 
+		vip_segment v
+	left join
+		bonuses b on v.player_id = b.player_id
+	group by 
+		v.player_id;
+	
+"""
 PLAYER_NAMES = {
     "bf19961d-fe65-43fa-afa0-dcf5a702365f": "Connie Williamson",
     "a52298a8-4faf-4651-9699-0d7709498e0e": "William Belzile",
@@ -239,6 +279,7 @@ def main():
     print(f"[{datetime.now()}] Витягуємо дані з баз...")
     df1 = fetch_data(SQL_QUERY_1, DB1_HOST, DB1_PORT, DB1_USER, DB1_PASS, DB1_NAME)
     df2 = fetch_data(SQL_QUERY_2, DB2_HOST, DB2_PORT, DB2_USER, DB2_PASS, DB2_NAME)
+    df3 = fetch_data(SQL_QUERY_3, DB3_HOST, DB3_PORT, DB3_USER, DB3_PASS, DB3_NAME)
 
     print(f"[{datetime.now()}] Робимо JOIN...")
     df_joined = pd.merge(df1, df2, on=JOIN_KEY, how="outer")
@@ -293,7 +334,10 @@ def main():
                 ["Чистый игровой доход (NGR)", "NGR"],
                 ["RTP игрока", "Player RTP"],
                 ["Максимальная ставка", "Max Bet"],
-                ["Лучшая игра (Провайдер)", "Top Game (Provider)"]
+                ["Лучшая игра (Провайдер)", "Top Game (Provider)"],
+                ["Бонус выдан?","Bonus Issued?"],
+                ["Детали бонуса", "Bonus Details"],
+                ["Выигрыш/Выплата с бонуса ТОТАЛ", "Bonus Win / Payout"]
             ]
             # Записуємо масив 16х2 починаючи з комірки A1
             worksheet.update(values=metrics_col, range_name="A1")
@@ -316,7 +360,10 @@ def main():
             [get_safe_str(row_data.get("ngr"))],                     
             [get_safe_str(row_data.get("rtp"))],                     
             [get_safe_str(row_data.get("max_bet"))],                 
-            [get_safe_str(row_data.get("top_game_name"))]            
+            [get_safe_str(row_data.get("top_game_name"))],
+            [get_safe_str(row_data.get("is_claimed"))],
+            [get_safe_str(row_data.get("bonus"))],
+            [get_safe_str(row_data.get("payout"))]
         ]
 
         start_cell = rowcol_to_a1(1, next_col_idx)

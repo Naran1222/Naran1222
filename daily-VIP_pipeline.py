@@ -24,6 +24,13 @@ DB2_USER = os.environ.get('USER_NAME')
 DB2_PASS = os.environ.get('PASSWORD')
 DB2_NAME = "infinity_game_service"
 
+#База 3
+DB3_HOST = os.environ.get('SERVER_NAME')
+DB3_PORT = os.environ.get('PORT')
+DB3_USER = os.environ.get('USER_NAME')
+DB3_PASS = os.environ.get('PASSWORD')
+DB3_NAME = "infinity_bonus_service"
+
 # Google Sheets
 GOOGLE_CREDS_JSON = os.environ.get('ETL_SHEETS_BOT_CD')
 SPREADSHEET_ID = "1qODTcrrOY_ih7uQwgDrEyTYr1KaLhu4rMy-u_h9Rx4I"
@@ -217,6 +224,44 @@ LEFT JOIN
 LEFT JOIN 
     sessions_data sd ON v.player_id = sd.player_id;
 """
+
+SQL_QUERY_3="""
+
+WITH 
+vip_segment AS (
+    SELECT UNNEST(ARRAY[
+        '1923bd7f-b03c-447c-8824-8bcc794fe437', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
+        'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
+        'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
+        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7', 
+        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+    ]::uuid[]) AS player_id
+),
+bonuses as (
+	select 
+		player_id,
+		name,
+		result,
+		base_currency_payout /100.0 as payout
+	from 
+		public.player_bonuses
+	where 
+		created_at<=current_date
+		and created_at>=current_date - interval'1 days'
+)
+select
+	v.player_id,
+	bool_or(b.result = 1) AS is_claimed,
+	STRING_AGG(b.name||': '||case when b.result = 1 then 'In proggress' when b.result = 2 then 'Finished' when b.result = 3 then 'Cancelled' when b.result = 4 then 'Lost' end||'('||b.payout||')', ', ') as bonus,
+	SUM(b.payout) as payout
+	from 
+		vip_segment v
+	left join
+		bonuses b on v.player_id = b.player_id
+	group by 
+		v.player_id;
+	
+"""
 PLAYER_NAMES = {
     "1923bd7f-b03c-447c-8824-8bcc794fe437": "Ian Raduly-turnbull",
     "55101c4e-3d2e-498a-b6a0-07db69de88ac": "julie collins",
@@ -252,10 +297,11 @@ def main():
     print(f"[{datetime.now()}] Витягуємо дані з баз...")
     df1 = fetch_data(SQL_QUERY_1, DB1_HOST, DB1_PORT, DB1_USER, DB1_PASS, DB1_NAME)
     df2 = fetch_data(SQL_QUERY_2, DB2_HOST, DB2_PORT, DB2_USER, DB2_PASS, DB2_NAME)
+    df3 = fetch_data(SQL_QUERY_3, DB3_HOST, DB3_PORT, DB3_USER, DB3_PASS, DB3_NAME)
 
     print(f"[{datetime.now()}] Робимо JOIN...")
-    df_joined = pd.merge(df1, df2, on=JOIN_KEY, how="outer")
-    # Видаляємо стару лінію з astype(str).replace(...)
+    df12 = pd.merge(df1, df2, on=JOIN_KEY, how="outer")
+    df_joined = pd.merge(df12, df3, on=JOIN_KEY, how="outer")
     df_joined.set_index(JOIN_KEY, inplace=True)
     
     print(f"[{datetime.now()}] Підключаємось до Google Sheets...")
@@ -294,7 +340,7 @@ def main():
                 ["Что сделал"], ["Player ID"], ["Dep Count"], ["Total Dep"], ["Avg Dep"],
                 ["First Dep"], ["Avg Redep"], ["Withdrawals Count"], ["Total Withdraw"],
                 ["Total Bets"], ["Total Wins"], ["GGR"], ["NGR"], ["Player RTP"],
-                ["Max Bet"], ["Top Game (Provider)"]
+                ["Max Bet"], ["Top Game (Provider)"], ["Bonus Issued?"], ["Bonus Details"],["Bonus Win / Payout"]
             ]
             worksheet.update(values=metrics_col, range_name=rowcol_to_a1(1, 1))
             next_col_idx = 2
@@ -320,7 +366,10 @@ def main():
             [get_safe_str(row_data.get("ngr"))],                     
             [get_safe_str(row_data.get("rtp"))],                     
             [get_safe_str(row_data.get("max_bet"))],                 
-            [get_safe_str(row_data.get("top_game_name"))]            
+            [get_safe_str(row_data.get("top_game_name"))],
+            [get_safe_str(row_data.get("is_claimed"))],
+            [get_safe_str(row_data.get("bonus"))],
+            [get_safe_str(row_data.get("payout"))]
         ]
 
         start_cell = rowcol_to_a1(1, next_col_idx)
