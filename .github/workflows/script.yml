@@ -2,7 +2,7 @@ name: Daily Python Script
 
 on:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '31 4 * * *'
   
   workflow_dispatch:
 
