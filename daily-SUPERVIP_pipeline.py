@@ -47,7 +47,8 @@ SQL_QUERY_1 = """
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', 
+        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14','95df5b43-0d58-4808-a651-5e6fdb220db0','1923bd7f-b03c-447c-8824-8bcc794fe437'
     ]::uuid[]) AS player_id
 ),
 gameplay_tx AS (
@@ -92,7 +93,8 @@ SQL_QUERY_2 = """
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', 
+        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14','95df5b43-0d58-4808-a651-5e6fdb220db0','1923bd7f-b03c-447c-8824-8bcc794fe437'
     ]::uuid[]) AS player_id
 ),
 sessions_data AS (
@@ -169,7 +171,8 @@ SQL_QUERY_3="""
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', 
+        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14','95df5b43-0d58-4808-a651-5e6fdb220db0','1923bd7f-b03c-447c-8824-8bcc794fe437'
     ]::uuid[]) AS player_id
 ),
 bonuses as (
@@ -201,7 +204,8 @@ SQL_QUERY_4="""
 WITH 
 vip_segment AS (
     SELECT UNNEST(ARRAY[
-         'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14'
+        'bf19961d-fe65-43fa-afa0-dcf5a702365f', 'a52298a8-4faf-4651-9699-0d7709498e0e', '1a3665c3-990d-4183-a765-1c6568fc5553', 
+        '0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14','95df5b43-0d58-4808-a651-5e6fdb220db0','1923bd7f-b03c-447c-8824-8bcc794fe437'
     ]::uuid[]) AS player_id
 ),
 payments_base AS (
@@ -269,7 +273,9 @@ PLAYER_NAMES = {
     "bf19961d-fe65-43fa-afa0-dcf5a702365f": "Connie Williamson",
     "a52298a8-4faf-4651-9699-0d7709498e0e": "William Belzile",
     "1a3665c3-990d-4183-a765-1c6568fc5553": "mary younan",
-    "0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14": "Mathieu Livingstone"
+    "0f65ef4e-67c5-4ec0-bd92-ba0f2d6adc14": "Mathieu Livingstone",
+    "1923bd7f-b03c-447c-8824-8bcc794fe437": "Ian Raduly-turnbull",
+    "95df5b43-0d58-4808-a651-5e6fdb220db0": "Florence Dotzenroth"
 }
 
 
