@@ -50,7 +50,9 @@ vip_segment AS (
         '9061900a-5fd4-45c2-bba3-d60345e53714', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
         'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
         'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7' 
+        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7',
+        '89b6b081-24bd-4580-b0f5-0439a6678627', '657291a6-e200-4982-a859-7293d4da509c',
+        'a5bdc9c0-f118-4e8a-9156-ad8249060018'
     ]::uuid[]) AS player_id
 ),
 gameplay_tx AS (
@@ -98,7 +100,9 @@ vip_segment AS (
         '9061900a-5fd4-45c2-bba3-d60345e53714', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
         'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
         'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7' 
+        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7',
+        '89b6b081-24bd-4580-b0f5-0439a6678627', '657291a6-e200-4982-a859-7293d4da509c',
+        'a5bdc9c0-f118-4e8a-9156-ad8249060018'
     ]::uuid[]) AS player_id
 ),
 sessions_data AS (
@@ -179,7 +183,9 @@ vip_segment AS (
         '9061900a-5fd4-45c2-bba3-d60345e53714', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
         'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
         'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7' 
+        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7',
+        '89b6b081-24bd-4580-b0f5-0439a6678627', '657291a6-e200-4982-a859-7293d4da509c',
+        'a5bdc9c0-f118-4e8a-9156-ad8249060018'
     ]::uuid[]) AS player_id
 ),
 bonuses as (
@@ -215,7 +221,9 @@ vip_segment AS (
         '9061900a-5fd4-45c2-bba3-d60345e53714', '55101c4e-3d2e-498a-b6a0-07db69de88ac', 
         'bb77cf7b-bdb7-4322-b155-1280c87d0059', '9a1628f5-ea05-4d5a-b96d-9be5d6998d1c', 
         'f6d66acc-4ea8-4f7e-9e88-a0aaf1413d4f', '77694558-39de-448f-8ff9-b2a72dbd832d', 
-        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7' 
+        'd9340c4a-60a5-4ad4-8535-103dcdfb4b53', '3c6cec32-3412-4956-8407-4e95259bd1b7',
+        '89b6b081-24bd-4580-b0f5-0439a6678627', '657291a6-e200-4982-a859-7293d4da509c',
+        'a5bdc9c0-f118-4e8a-9156-ad8249060018' 
     ]::uuid[]) AS player_id
 ),
 payments_base AS (
@@ -287,7 +295,9 @@ PLAYER_NAMES = {
     "77694558-39de-448f-8ff9-b2a72dbd832d": "Hazel Greene",
     "d9340c4a-60a5-4ad4-8535-103dcdfb4b53": "Chyrel Lestage",
     "3c6cec32-3412-4956-8407-4e95259bd1b7": "garret johnson",
-    "9061900a-5fd4-45c2-bba3-d60345e53714": "Maryse Lachance"
+    "89b6b081-24bd-4580-b0f5-0439a6678627": "Nasir Ali",
+    "657291a6-e200-4982-a859-7293d4da509c": "Sharon Hofmann",
+    "a5bdc9c0-f118-4e8a-9156-ad8249060018": "Sébastien Landry"
 }
 
 
